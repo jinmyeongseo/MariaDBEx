@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.app.mapper.BoardManageMapper">
+	<select id="dataCount" resultType="Integer" parameterType="map">
+		SELECT IFNULL(COUNT(*), 0)
+		FROM boardManage
+		<where>
+			<if test="enabled != null">
+				enabled = #{enabled}
+			</if>
+		</where>
+	</select>
+	
+	<select id="listBoard" parameterType="map" resultType="com.sp.app.domain.BoardManage">
+		SELECT boardId, boardTitle, typeNo, icon, attach, enabled, reg_date
+		FROM boardManage
+		<where>
+			<if test="enabled != null">
+				enabled = #{enabled}
+			</if>
+		</where>
+		ORDER BY reg_date DESC
+		LIMIT #{offset}, #{size}
+	</select>
+	
+	<select id="findById" parameterType="String" resultType="com.sp.app.domain.BoardManage">
+		SELECT boardId, boardTitle, typeNo, icon, attach, enabled, reg_date
+		FROM boardManage
+		WHERE boardId = #{boardId}
+	</select>
+	
+	<insert id="insertBoardManage" parameterType="com.sp.app.domain.BoardManage">
+		INSERT INTO boardManage(boardId, boardTitle, typeNo, icon, attach, enabled)
+			VALUES (#{boardId}, #{boardTitle}, #{typeNo}, #{icon, jdbcType=VARCHAR}, #{attach}, #{enabled})
+	</insert>
+
+	<update id="updateBoardManage" parameterType="com.sp.app.domain.BoardManage">
+		UPDATE boardManage SET boardTitle = #{boardTitle}, 
+			typeNo = #{typeNo}, attach = #{attach}, 
+			icon = #{icon, jdbcType=VARCHAR}, enabled = #{enabled}
+		WHERE boardId = #{boardId}
+	</update>
+	
+	<delete id="deleteBoardManage" parameterType="String">
+		DELETE FROM boardManage
+		WHERE boardId = #{boardId}
+	</delete>
+	
+	<update id="createBoardTable" parameterType="map">
+		CREATE TABLE ${tableName} (
+			num  INT UNSIGNED NOT NULL,
+			name VARCHAR(50) NOT NULL,
+			subject  VARCHAR(255) NOT NULL,
+			content  TEXT NOT NULL,
+			groupNum  INT UNSIGNED,
+			depth     INT,
+			orderNo   INT,
+			reg_date  DATETIME DEFAULT CURRENT_TIMESTAMP,
+			hitCount  INT DEFAULT 0,
+			ipAddr  VARCHAR(50) NOT NULL,
+			PRIMARY KEY(num)
+		)
+	</update>
+
+	<update id="createBoardFileTable" parameterType="map">
+		CREATE TABLE ${tableName}_File (
+			fileNum  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+			num  INT UNSIGNED NOT NULL,
+			saveFilename VARCHAR(255) NOT NULL,
+			originalFilename VARCHAR(255) NOT NULL,
+			fileSize  INT UNSIGNED NOT NULL,
+			PRIMARY KEY(fileNum),
+			FOREIGN KEY(num) REFERENCES ${tableName}(num)
+		) AUTO_INCREMENT 1
+	</update>
+	
+	<update id="createAnswerTable" parameterType="map">
+		CREATE TABLE ${tableName}_Answer (
+			num  INT UNSIGNED NOT NULL,
+			answerName VARCHAR(50) NOT NULL,
+			answer  TEXT NOT NULL,
+			answer_date  DATETIME DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY(num),
+			FOREIGN KEY(num) REFERENCES ${tableName}(num)
+		)
+	</update>
+	
+	<update id="dropTable" parameterType="String">
+		DROP TABLE ${tableName}
+	</update>
+</mapper>

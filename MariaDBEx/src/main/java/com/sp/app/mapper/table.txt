@@ -1,0 +1,26 @@
+-- OPEN
+   USE mydb;
+
+-- 현재 데이터베이스 확인
+   SELECT database();
+
+-- 테이블 목록
+   SHOW tables;
+
+-- 게시판 관리 테이블
+   -- DROP TABLE boardManage;
+   
+   CREATE TABLE  boardManage (
+      boardId   VARCHAR(255)  NOT  NULL,
+      boardTitle  VARCHAR(255)  NOT  NULL,
+      icon  VARCHAR(255),
+      typeNo  INT  DEFAULT 0,
+      attach     INT  DEFAULT 0,
+      enabled    INT  DEFAULT 1,
+      reg_date   DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(boardId)
+   );
+   
+   SHOW tables;
+   DESC boardManage;
+   

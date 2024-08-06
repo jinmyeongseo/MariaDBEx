@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sp.app.mapper.CommunityMapper">
+	<select id="communityNum" parameterType="String" resultType="Long">
+		SELECT IFNULL(MAX(num), 0) FROM ${tableName}
+	</select>
+	
+	<insert id="insertCommunity" parameterType="com.sp.app.domain.Community">
+		INSERT INTO ${tableName}(num, name, subject, content,
+				groupNum, depth, orderNo, 
+				ipAddr, reg_date, hitCount)
+			VALUES(#{num}, #{name}, #{subject}, #{content},
+				#{groupNum}, #{depth}, #{orderNo}, 
+				#{ipAddr}, NOW(), 0)
+	</insert>
+
+	<update id="updateOrderNo" parameterType="map">
+		UPDATE ${tableName} SET orderNo=orderNo+1
+		WHERE groupNum = #{groupNum} AND orderNo &gt; #{orderNo}
+	</update>
+
+	<sql id="where-list">
+		<choose>
+			<when test="schType=='all'">
+				( INSTR(subject, #{kwd}) &gt; 0 
+			     	OR INSTR(content, #{kwd}) &gt; 0 )
+			</when>
+			<when test="schType=='reg_date'">
+				( DATE_FORMAT(reg_date, '%Y-%m-%d') = #{kwd}
+				     OR DATE_FORMAT(reg_date, '%Y%m%d') = #{kwd} )
+			</when>
+			<otherwise>  <!-- 이름,내용,제목 -->
+				INSTR(${schType}, #{kwd}) &gt; 0 
+			</otherwise>
+		</choose>
+	</sql>
+	
+	<select id="dataCount" parameterType="map" resultType="Integer">
+		SELECT IFNULL(COUNT(*), 0)
+		FROM ${tableName}
+		<where>
+			<if test="kwd != null and kwd != '' ">
+				<include refid="where-list"/>
+			</if>
+		</where>
+	</select>
+
+	<!-- CASE WHEN content IS NULL THEN 0 ELSE 1 END AS answerCount -->	
+	<select id="listCommunity" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT b.num, name, subject, hitCount, 
+			depth, orderNo, groupNum,
+			DATE_FORMAT(b.reg_date, '%Y-%m-%d') reg_date
+			<if test="typeNo==2">
+				,IFNULL(answerCount, 0) answerCount
+			</if>
+		FROM ${tableName} b
+		<if test="typeNo==2">
+			LEFT OUTER JOIN (
+				SELECT num, 1 AS answerCount
+				FROM ${tableName}_Answer
+			) a ON b.num = a.num
+		</if>
+		<where>
+			<if test="kwd != null and kwd != '' ">
+				<include refid="where-list"/>
+			</if>
+		</where>
+		<choose>
+			<when test="typeNo==1">
+				ORDER BY groupNum DESC, orderNo ASC
+			</when>
+			<otherwise>
+				ORDER BY num DESC
+			</otherwise>
+		</choose>
+		LIMIT #{offset}, #{size}
+	</select>
+	
+	<select id="findById" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT num, name, subject, content,
+			ipAddr, hitCount, reg_date,
+			groupNum, depth, orderNo
+		FROM ${tableName}	
+		WHERE num = #{num}
+	</select>
+	
+	<update id="updateHitCount" parameterType="map">
+		UPDATE ${tableName} SET hitCount = hitCount+1
+		WHERE num = #{num}
+	</update>
+	
+	<select id="findByPrev" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT num, subject
+		FROM ${tableName}
+		<where>
+			<if test="kwd != null and kwd != '' ">
+				<include refid="where-list"/>
+			</if>
+			<choose>
+				<when test="typeNo==1">
+					AND ( (groupNum=#{groupNum} AND orderNo &lt; #{orderNo} )
+						OR (groupNum &gt; #{groupNum}) )
+				</when>
+				<otherwise>
+					AND (num &gt; #{num})
+				</otherwise>
+			</choose>			
+		</where>
+		<choose>
+			<when test="typeNo==1">
+				ORDER BY groupNum ASC, orderNo DESC
+			</when>
+			<otherwise>
+				ORDER BY num ASC
+			</otherwise>
+		</choose>		
+		LIMIT 1
+	</select>
+	
+	<select id="findByNext" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT num, subject
+		FROM ${tableName}
+		<where>
+			<if test="kwd != null and kwd != '' ">
+				<include refid="where-list"/>
+			</if>
+			<choose>
+				<when test="typeNo==1">
+					AND ( (groupNum=#{groupNum} AND orderNo &gt; #{orderNo} )
+						OR (groupNum &lt; #{groupNum}) )
+				</when>
+				<otherwise>
+					AND (num &lt; #{num})
+				</otherwise>
+			</choose>			
+			
+		</where>
+		<choose>
+			<when test="typeNo==1">
+				ORDER BY groupNum DESC, orderNo ASC
+			</when>
+			<otherwise>
+				ORDER BY num DESC
+			</otherwise>
+		</choose>		
+		LIMIT 1
+	</select>
+	
+	<update id="updateCommunity" parameterType="com.sp.app.domain.Community">
+		UPDATE ${tableName} SET name = #{name},
+			subject = #{subject}, content = #{content}
+		WHERE num = #{num}
+	</update>
+	
+	<delete id="deleteCommunity" parameterType="map">
+		DELETE FROM ${tableName}
+		WHERE num = #{num}
+	</delete>
+
+	<delete id="deleteCommunityList" parameterType="map">
+		DELETE FROM ${tableName}
+		WHERE num IN
+		<foreach collection="list" item="num" index="index"
+				open="(" separator="," close=")">
+			#{num}
+		</foreach>
+	</delete>
+	
+	<!-- 답변형에서 동일 그룹중 출력 순서가 자신보다 같거나 큰 게시글 -->
+	<select id="listCommunityGroup" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT num, depth, orderNo
+		FROM ${tableName}
+		WHERE groupNum = (SELECT groupNum FROM ${tableName} WHERE num = #{num} )
+			AND orderNo >= (SELECT orderNo FROM  ${tableName} WHERE num = #{num} )
+		ORDER BY orderNo ASC
+	</select>
+
+	<select id="findByQuestionAnswer" parameterType="map"
+			resultType="com.sp.app.domain.Community">
+		SELECT num, answerName, answer, answer_date
+		FROM ${tableName}_Answer
+		WHERE num = #{num}
+	</select>
+	
+	<insert id="insertQuestionAnswer" parameterType="com.sp.app.domain.Community">
+		INSERT INTO ${tableName}_Answer(num, answerName, answer, answer_date)
+			VALUES(#{num}, #{answerName}, #{answer}, NOW())
+	</insert>
+
+	<update id="updateQuestionAnswer" parameterType="com.sp.app.domain.Community">
+		UPDATE ${tableName}_Answer SET answerName = #{answerName},
+			answer = #{answer}
+		WHERE num = #{num}
+	</update>
+
+	<delete id="deleteQuestionAnswer" parameterType="map">
+		DELETE FROM ${tableName}_Answer
+		WHERE num = #{num}
+	</delete>
+
+	<select id="findByFileId" parameterType="map" resultType="com.sp.app.domain.Community">
+		SELECT fileNum, num, saveFilename, originalFilename, fileSize
+		FROM ${tableName}_File
+	    WHERE fileNum = #{fileNum}
+	</select>
+
+	<select id="listCommunityFile" parameterType="map" resultType="com.sp.app.domain.Community">
+		SELECT fileNum, num, saveFilename, originalFilename, fileSize
+		FROM ${tableName}_File
+		WHERE num = #{num}    
+	</select>
+	
+	<insert id="insertCommunityFile" parameterType="com.sp.app.domain.Community">
+		INSERT INTO ${tableName}_File(num, saveFilename, originalFilename, fileSize)
+			VALUES(#{num}, #{saveFilename}, #{originalFilename}, #{fileSize})
+	</insert>
+	
+	<delete id="deleteCommunityFile" parameterType="map">
+		DELETE FROM ${tableName}_File
+		WHERE ${field} = #{num}
+	</delete>
+</mapper>

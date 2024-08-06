@@ -1,0 +1,90 @@
+﻿@charset "UTF-8";
+
+/* .popup-wrap * { padding: 0; margin: 0; } */
+.popup-wrap *, .popup-wrap *::after, .popup-wrap *::before { box-sizing: border-box; }
+
+.popup-wrap {
+	background-color: rgba(213, 213, 213, 0.3);
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: none;
+	padding: 15px;
+	opacity: 0;
+}
+.popup-wrap .popup-content {
+	width: 100%;
+	max-width: 550px;
+	background-color: #ffffff;
+	border-radius: 7px;
+	overflow: hidden;
+	border: 1px solid #cccccc;
+	box-shadow: 3px 5px 5px 1px rgba(0,0,0,.2);
+}
+.popup-wrap .popup-header {
+	width: 100%;
+	padding: 7px 10px;
+	border-bottom: 1px solid #cccccc;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.popup-wrap .popup-title {
+	font-size: 19px;
+	padding: 10px 7px;
+	font-weight: 500;
+}
+.popup-wrap .popup-body {
+	width:100%;
+	background-color:#ffffff;
+	padding:30px;
+	display: block;
+}
+
+.popup-wrap .popup-footer {
+	display: flex;
+	width: 100%;
+	padding: 10px 7px;
+	border-top: 1px solid #cccccc;
+	align-items: center;
+	justify-content: flex-end;
+}
+.popup-wrap .btn-popup {
+	color: #333;
+	border: 1px solid #555;
+	background-color: #fff;
+	padding: 5px 10px;
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-size: 14px;
+	font-family: "맑은 고딕", 나눔고딕, 돋움, sans-serif;
+	vertical-align: baseline;
+}
+.popup-header .btn-icon {
+	/* border: none; */
+	border-color: #ffffff;
+}
+
+.popup-wrap .popup-footer .btn-popup {
+	margin-right: 5px;
+}
+
+.popup-wrap .btn-popup:hover, .popup-wrap .btn-popup:active, .popup-wrap .btn-popup:focus {
+	background-color: #e6e6e6;
+	border-color: #adadad;
+	color:#333;
+}
+.popup-header .btn-icon:hover,  .popup-header .btn-icon:active, .popup-header .btn-icon:focus {
+	background-color: #ffffff;
+	border: 1px solid #adadad;
+}
+
+.popup-footer .confirm { background: #106eea; border:1px solid #00a6eb; color:#fff; }
+.popup-footer .confirm:hover, .popup-footer .confirm:active, .popup-footer .confirm:focus {
+	background: #3284f1; border:1px solid #00a6eb; color:#fff;
+}
